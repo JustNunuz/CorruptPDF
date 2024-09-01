@@ -1,0 +1,69 @@
+import zipfile
+import xml.dom.minidom
+import xml.etree.ElementTree as ET
+from pathlib import Path
+import os 
+
+def corrupt_word_document(input_path, output_path):
+    # Backup the original file
+    input_path.rename(Path(str(input_path) + '_backup'))
+
+    # Load the docx as a zip archive
+    with zipfile.ZipFile(input_path, 'r') as zip_ref:
+        zip_ref.extractall('.')
+
+        # Find the main document.xml
+        for member in zip_ref.namelist():
+            if '/word/document.xml' in member:
+                document_xml = member
+
+    # Parse the extracted XML file
+    dom = xml.dom.minidom.parse(document_xml)
+
+    # Traverse nodes
+    for node in traverse(dom.childNodes):
+        if isinstance(node, ET.ElementBase) and node.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p':
+            temp = node.getparent()
+            temp.remove(node)
+            temp.insert(0, node)
+
+    # Save the modified XML
+    with open(document_xml, 'wb') as f:
+        f.write(dom.toxml('utf-8').encode('utf-8'))
+
+    # Repack the corrupted Word document
+    repacked_zip = zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED)
+
+    for root, dirs, files in os.walk('./'):
+        for file in files:
+            if not file.startswith('~$') and file != 'document.xml':
+                repacked_zip.write(os.path.join(root, file), arcname=os.path.relpath(os.path.join(root, file)))
+
+    repacked_zip.close()
+
+    # Delete the extracted files
+    os.remove(document_xml)
+
+    for folderName, _, fileNameList in os.walk('./'):
+        for file_name in fileNameList:
+            if not file_name.startswith('~$'):
+                os.remove(os.path.join(folderName, file_name))
+                os.rmdir(folderName)
+
+def traverse(nodes):
+    """Traverse Node Iterator"""
+    for node in nodes:
+        if node.nodeType == node.ELEMENT_NODE:
+            yield node
+        elif node.nodeType == node.TEXT_NODE:
+            pass
+        elif node.nodeType == node.COMMENT_NODE:
+            pass
+        if node.hasChildNodes():
+            for childNode in traverse(node.childNodes):
+                yield childNode
+
+input_path = Path('test.docx')
+output_path = Path('corrupted_test.docx')
+
+corrupt_word_document(input_path, output_path)

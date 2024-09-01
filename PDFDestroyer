@@ -1,0 +1,33 @@
+import os
+import struct
+import random
+from PyPDF2 import PdfReader
+
+def corrupt_pdf(input_file, output_file):
+    # Update the paths with the joined strings
+    input_path, input_filename = os.path.split(input_file)
+    output_path, output_filename = os.path.split(output_file)
+
+    with open(input_file, mode="rb") as f:
+        raw_bytes = f.read()
+
+    # Choose a random integer between 1 MiB and 5 MiB
+    padding_length = random.randint(1 << 20, 5 << 20)
+
+    # Write the padding bytes
+    with open(output_file, mode="wb") as f:
+        f.write(struct.pack("<Q", padding_length))
+        f.write(os.urandom(padding_length))
+
+    # Write the original PDF bytes
+    with open(output_file, mode="ab") as f:
+        f.write(raw_bytes)
+
+    # Seek back to the beginning and truncate the file
+    with open(output_file, mode="rb+") as f:
+        f.seek(0)
+        f.truncate()
+
+# Call the function using the current working directory
+current_dir = os.getcwd()
+corrupt_pdf(os.path.join(current_dir, "original.pdf"), os.path.join(current_dir, "corrupted.pdf"))

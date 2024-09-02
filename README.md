@@ -1,5 +1,7 @@
 # CorruptPDF: A Python Demonstration for PDF Corruption
 
+![Alt text](./assets/corrupt%20PDF.jpeg)
+
 Welcome to the CorruptPDF repository! This project is a Python-based demonstration of various techniques to intentionally corrupt PDF files. The goal is to showcase the potential vulnerabilities and risks associated with handling and manipulating PDF documents, especially in the context of security and data integrity.
 
 ## Features
@@ -42,4 +44,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - The Python community for providing the tools and libraries used in this project.
 - The open-source community for their contributions to the security and data integrity field.
-
